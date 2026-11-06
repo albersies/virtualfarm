@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secuencia Aguacate Bioluminiscente</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: #ffffff;
+      color: #0f172a;
+      overflow-x: hidden;
+    }
+    
+    .scroll-container { height: 400vh; }
+
+    .viewport {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .hero-text {
+      position: absolute;
+      text-align: center;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      z-index: 30;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    .hero-text span {
+      display: block;
+      font-size: 0.85rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 10px;
+    }
+
+    .bounce-arrow {
+      width: 24px;
+      height: 24px;
+      stroke: #cbd5e1;
+      stroke-width: 1.5;
+      fill: none;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); opacity: 0.6; }
+      40% { transform: translateY(8px); opacity: 1; }
+      60% { transform: translateY(4px); opacity: 0.8; }
+    }
+
+    .artwork-box {
+      position: relative;
+      width: 380px;
+      height: 560px;
+    }
+
+    .artwork-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0;
+    }
+
+    /* Máscara de trazado para la imagen real */
+    .mask-layer {
+      mask-image: url(#drawing-mask);
+      -webkit-mask-image: url(#drawing-mask);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="scroll-container">
+    <div class="viewport">
+      
+      <!-- Paso 0: Texto inicial y flecha -->
+      <div id="heroText" class="hero-text" onclick="window.scrollTo({top: window.innerHeight, behavior: 'smooth'})">
+        <span>scroll to get in</span>
+        <svg class="bounce-arrow" viewBox="0 0 24 24">
+          <path d="M19 14l-7 7m0 0l-7-7m7 7V3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <!-- Contenedor con tus 3 imágenes reales -->
+      <div class="artwork-box">
+        <img id="layer-vaso" class="artwork-layer" src="vaso.jpg" alt="Vaso de agua">
+        <img id="layer-hueso" class="artwork-layer" src="hueso.jpg" alt="Hueso de aguacate">
+        <img id="layer-planta" class="artwork-layer mask-layer" src="planta.jpg" alt="Planta y Raíces">
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Máscara SVG para la animación de dibujo -->
+  <svg style="width:0; height:0; position:absolute;">
+    <defs>
+      <mask id="drawing-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="380" height="560">
+        <path id="mask-path-roots" fill="none" stroke="#ffffff" stroke-width="80" stroke-linecap="round" d="M 190 360 Q 190 440 190 520" />
+        <path id="mask-path-stem" fill="none" stroke="#ffffff" stroke-width="80" stroke-linecap="round" d="M 190 330 Q 190 200 190 60" />
+        <circle id="mask-circle-leaves" cx="190" cy="150" r="160" fill="#ffffff" opacity="0" />
+      </mask>
+    </defs>
+  </svg>
+
+  <script>
+    const heroText = document.getElementById('heroText');
+    const layerVaso = document.getElementById('layer-vaso');
+    const layerHueso = document.getElementById('layer-hueso');
+    const layerPlanta = document.getElementById('layer-planta');
+    
+    const maskRoots = document.getElementById('mask-path-roots');
+    const maskStem = document.getElementById('mask-path-stem');
+    const maskLeaves = document.getElementById('mask-circle-leaves');
+
+    const lenRoots = maskRoots.getTotalLength();
+    const lenStem = maskStem.getTotalLength();
+    
+    maskRoots.style.strokeDasharray = lenRoots;
+    maskRoots.style.strokeDashoffset = lenRoots;
+    maskStem.style.strokeDasharray = lenStem;
+    maskStem.style.strokeDashoffset = lenStem;
+
+    window.addEventListener('scroll', () => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollY = window.scrollY;
+      const p = Math.min(Math.max(scrollY / maxScroll, 0), 1);
+
+      // Paso 0: Texto inicial
+      if (p < 0.08) {
+        heroText.style.opacity = '1';
+      } else {
+        heroText.style.opacity = '0';
+      }
+
+      // Paso 1: Vaso de Agua
+      if (p >= 0.08) {
+        layerVaso.style.opacity = '1';
+      } else {
+        layerVaso.style.opacity = '0';
+      }
+
+      // Paso 2: Caída de la semilla
+      if (p >= 0.33) {
+        const pSeed = Math.min((p - 0.33) / 0.25, 1);
+        layerHueso.style.opacity = '1';
+        layerHueso.style.transform = `translateY(${-140 * (1 - pSeed)}px)`;
+      } else {
+        layerHueso.style.opacity = '0';
+        layerHueso.style.transform = 'translateY(-140px)';
+      }
+
+      // Paso 3: Dibujo progresivo de planta y raíces
+      if (p >= 0.65) {
+        const pPlant = (p - 0.65) / 0.35;
+        layerPlanta.style.opacity = '1';
+        
+        maskRoots.style.strokeDashoffset = lenRoots * (1 - Math.min(pPlant * 1.5, 1));
+        maskStem.style.strokeDashoffset = lenStem * (1 - Math.min(pPlant * 1.2, 1));
+        
+        if (pPlant > 0.35) {
+          maskLeaves.style.opacity = Math.min((pPlant - 0.35) / 0.65, 1);
+        } else {
+          maskLeaves.style.opacity = '0';
+        }
+      } else {
+        layerPlanta.style.opacity = '0';
+        maskRoots.style.strokeDashoffset = lenRoots;
+        maskStem.style.strokeDashoffset = lenStem;
+        maskLeaves.style.opacity = '0';
+      }
+    });
+  </script>
+</body>
+</html>
